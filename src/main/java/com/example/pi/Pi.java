@@ -1,7 +1,5 @@
 package com.example.pi;
 
-import scala.concurrent.duration.Duration;
-
 public class Pi {
 
     public static class Calculate {
@@ -55,9 +53,9 @@ public class Pi {
 
     public static class PiApproximation {
         private final double pi;
-        private final Duration duration;
+        private final long duration;
 
-        public PiApproximation(double pi, Duration duration) {
+        public PiApproximation(double pi, long duration) {
             this.pi = pi;
             this.duration = duration;
         }
@@ -66,7 +64,7 @@ public class Pi {
             return pi;
         }
 
-        public Duration getDuration() {
+        public long getDuration() {
             return duration;
         }
     }

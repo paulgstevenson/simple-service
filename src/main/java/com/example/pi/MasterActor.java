@@ -15,8 +15,9 @@ public class MasterActor extends UntypedActor {
 
     private double pi;
     private int nrOfResults;
-    private final long start = System.currentTimeMillis();
+    private long start;
 
+    private ActorRef sender;
     private final ActorRef workerRouter;
     private int nrOfMessages;
 
@@ -29,13 +30,14 @@ public class MasterActor extends UntypedActor {
 
     @Override
     public void preStart() {
-        LOGGER.debug("starting master actor");
     }
 
     public void onReceive(Object message) {
         if (message instanceof Pi.Calculate) {
+            start = System.currentTimeMillis();
             Pi.Calculate calculate = (Pi.Calculate) message;
             nrOfMessages = calculate.getNrOfMessages();
+            sender = getSender();
             for (int start = 0; start < calculate.getNrOfMessages(); start++) {
                 workerRouter.tell(new Pi.Work(start, calculate.getNrOfElements()), getSelf());
             }
@@ -44,11 +46,8 @@ public class MasterActor extends UntypedActor {
             pi += result.getValue();
             nrOfResults += 1;
             if (nrOfResults == nrOfMessages) {
-                LOGGER.debug("returning result");
                 Duration duration = Duration.create(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS);
-                LOGGER.debug("sender "+ getSender().toString());
-
-                getSender().tell(new Pi.PiApproximation(pi, duration), getSelf());
+                sender.tell(new Pi.PiApproximation(pi, duration.toMillis()), getSelf());
             }
         } else {
             unhandled(message);

@@ -36,15 +36,6 @@ public class MyResource {
     @Inject
     ActorSystem system;
 
-    @Inject
-    ActorRef actors;
-
-    /**
-     * Method handling HTTP GET requests. The returned object will be sent
-     * to the client as "text/plain" media type.
-     *
-     * @return String that will be returned as a text/plain response.
-     */
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public String getIt() {
@@ -53,49 +44,26 @@ public class MyResource {
         return "Got it! "+ system.toString();
     }
 
-/*    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("{value}")
-    @ManagedAsync
-    public void getExamples (@PathParam("value") Integer value, @Suspended final AsyncResponse res) {
-        Timeout timeout = new Timeout(Duration.create(2, "seconds"));
-        Future<Object> future = Patterns.ask(actors, value, timeout);
-
-        future.onComplete(new OnComplete<Object>() {
-
-            public void onComplete(Throwable failure, Object result) {
-                if (failure != null) {
-
-                    if (failure.getMessage() != null) {
-                        HashMap<String,String> response = new HashMap<String,String>();
-                        response.put("error", failure.getMessage());
-                        res.resume(Response.serverError().entity(response).build());
-                    } else {
-                        res.resume(Response.serverError());
-                    }
-
-                } else {
-
-                    HashMap<String,Object> response = new HashMap<String,Object>();
-                    response.put("results",(Integer)result);
-                    res.resume(Response.ok().entity(response).build());
-
-                }
-
-            }
-        }, system.dispatcher());
-
-    }*/
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/pi/{messages}/{elements}")
     @ManagedAsync
     public void getPi (@PathParam("messages") Integer messages, @PathParam("elements") Integer elements, @Suspended final AsyncResponse res) {
-        Timeout timeout = new Timeout(Duration.create(100, "seconds"));
-        Pi.Calculate calculate = new Pi.Calculate(messages,elements);
+        callPiActor(4, res, new Pi.Calculate(messages,elements));
 
-        ActorRef master = system.actorOf(Props.create(MasterActor.class, system, 5));
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/pi/{messages}/{elements}/{workers}")
+    @ManagedAsync
+    public void getComparePi (@PathParam("messages") Integer messages, @PathParam("elements") Integer elements, @PathParam("workers") Integer workers, @Suspended final AsyncResponse res) {
+        callPiActor(workers, res, new Pi.Calculate(messages,elements));
+    }
+
+    private void callPiActor(Integer workers, final AsyncResponse res, Pi.Calculate calculate) {
+        Timeout timeout = new Timeout(Duration.create(100, "seconds"));
+        ActorRef master = system.actorOf(Props.create(MasterActor.class, system, workers));
 
         Future<Object> future = Patterns.ask(master, calculate, timeout);
         future.onComplete(new OnComplete<Object>() {
@@ -120,6 +88,5 @@ public class MyResource {
 
             }
         }, system.dispatcher());
-
     }
 }

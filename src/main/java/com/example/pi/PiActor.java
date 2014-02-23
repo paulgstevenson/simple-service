@@ -11,7 +11,6 @@ public class PiActor extends UntypedActor {
 
     @Override
     public void preStart() {
-        LOGGER.debug("starting actor");
     }
 
     public void onReceive(Object message) {

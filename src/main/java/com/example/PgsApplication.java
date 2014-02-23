@@ -1,9 +1,6 @@
 package com.example;
 
-import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-import akka.actor.Props;
-import com.example.pi.MasterActor;
 import org.glassfish.hk2.api.DynamicConfiguration;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.jersey.internal.inject.Injections;
@@ -28,14 +25,9 @@ public class PgsApplication extends Application {
     public PgsApplication(ServiceLocator serviceLocator) {
         LOGGER.info("Setting up Actor system");
         system = ActorSystem.create("PgsSystem");
-        //ActorRef ref = system.actorOf(new RoundRobinPool(5).props(Props.create(DoublingActor.class)));
-
-        ActorRef master = system.actorOf(Props.create(MasterActor.class,system,5));
-
 
         DynamicConfiguration dc = Injections.getConfiguration(serviceLocator);
         Injections.addBinding(Injections.newBinder(system).to(ActorSystem.class), dc);
-        Injections.addBinding(Injections.newBinder(master).to(ActorRef.class), dc);
         dc.commit();
 
         LOGGER.info("Completed binding");
